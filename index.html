@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Meu Financeiro</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:520px;margin:auto;min-height:100vh;padding-bottom:92px}
+header{background:#111827;color:#fff;padding:24px 20px 22px;border-radius:0 0 24px 24px}
+header .small{opacity:.7;font-size:13px}header h1{margin:4px 0 0;font-size:27px}
+main{padding:18px}.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{background:#fff;border:1px solid #e7eaf0;border-radius:17px;padding:16px;box-shadow:0 3px 12px #00000008}
+.kpi .label{font-size:12px;color:#697386}.kpi .value{font-size:22px;font-weight:750;margin-top:5px}
+.green{color:#16834b}.red{color:#c63b3b}.blue{color:#2867c7}
+.section-title{font-size:18px;font-weight:750;margin:22px 2px 10px}
+button{border:0;border-radius:13px;padding:13px 15px;font-weight:700;font-size:14px;cursor:pointer}
+.primary{background:#111827;color:#fff}.secondary{background:#e9edf4;color:#172033}.danger{background:#fee2e2;color:#a61b1b}
+.actions{display:flex;gap:9px;flex-wrap:wrap}.actions button{flex:1;min-width:130px}
+.progress{height:10px;background:#e8ebf0;border-radius:10px;overflow:hidden;margin-top:10px}.bar{height:100%;background:#111827;width:0}
+input,select{width:100%;padding:12px;border:1px solid #d9dee8;border-radius:11px;background:#fff;font-size:16px;margin:5px 0 12px}
+label{font-size:12px;font-weight:650;color:#586174}.form{background:#fff;border:1px solid #e7eaf0;border-radius:17px;padding:16px}
+.item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #edf0f4}.item:last-child{border-bottom:0}
+.item small{color:#70798a}.amount{font-weight:750;white-space:nowrap}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e4e7ed;display:flex;justify-content:center;z-index:5;padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
+.navin{max-width:520px;width:100%;display:flex;justify-content:space-around}.navbtn{background:none;color:#697386;padding:7px 10px;font-size:11px}.navbtn.active{color:#111827}.navicon{font-size:19px;display:block}
+.notice{background:#eef5ff;border-radius:14px;padding:13px;font-size:13px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="small">Seu controle financeiro</div><h1>Meu Financeiro</h1></header>
+<main>
+<section id="home" class="page active">
+<div class="grid">
+<div class="card kpi"><div class="label">Meta semanal</div><div class="value" id="kMeta">€0</div></div>
+<div class="card kpi"><div class="label">Renda</div><div class="value green" id="kIncome">€0</div></div>
+<div class="card kpi"><div class="label">Gastos</div><div class="value red" id="kExpense">€0</div></div>
+<div class="card kpi"><div class="label">Saldo</div><div class="value blue" id="kBalance">€0</div></div>
+</div>
+<div class="section-title">Como está a semana</div>
+<div class="card">
+<div style="display:flex;justify-content:space-between"><span>Horas pagas</span><b id="kHours">0h</b></div>
+<div style="display:flex;justify-content:space-between;margin-top:9px"><span>Falta para a meta</span><b id="kRemaining">€0</b></div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div class="notice" id="status">Registre seu primeiro dia de trabalho.</div>
+</div>
+<div class="section-title">Ações rápidas</div>
+<div class="actions">
+<button class="primary" onclick="go('work')">+ Trabalho</button>
+<button class="secondary" onclick="go('expenses')">+ Gasto</button>
+<button class="secondary" onclick="go('goals')">+ Objetivo</button>
+</div>
+<div class="section-title">Próximo objetivo</div>
+<div class="card" id="nextGoal">Nenhum objetivo cadastrado.</div>
+</section>
+
+<section id="work" class="page">
+<div class="section-title">Registrar trabalho</div>
+<div class="form">
+<label>Data</label><input id="wDate" type="date">
+<label>Horas no local</label><input id="wHours" type="number" step="0.25" min="0" placeholder="Ex.: 8">
+<label>Pausas de 15 min</label><input id="wBreaks" type="number" step="1" min="0" value="0">
+<label>Tipo</label><select id="wType"><option value="normal">Dia normal</option><option value="sunday">Domingo</option></select>
+<button class="primary" style="width:100%" onclick="addWork()">Salvar trabalho</button>
+</div>
+<div class="section-title">Esta semana</div><div class="card" id="workList"></div>
+</section>
+
+<section id="expenses" class="page">
+<div class="section-title">Registrar gasto</div>
+<div class="form">
+<label>Data</label><input id="eDate" type="date">
+<label>Valor (€)</label><input id="eValue" type="number" step="0.01" min="0" placeholder="0.00">
+<label>Categoria</label><select id="eCat"><option>Alimentação</option><option>Transporte</option><option>Casa</option><option>Telefone/Internet</option><option>Lazer</option><option>Outros</option></select>
+<label>Descrição</label><input id="eDesc" placeholder="Ex.: mercado">
+<button class="primary" style="width:100%" onclick="addExpense()">Salvar gasto</button>
+</div>
+<div class="section-title">Esta semana</div><div class="card" id="expenseList"></div>
+</section>
+
+<section id="goals" class="page">
+<div class="section-title">Objetivos</div>
+<div class="form">
+<label>Nome</label><input id="gName" placeholder="Ex.: Renovação do curso">
+<label>Meta (€)</label><input id="gTarget" type="number" step="0.01" min="0">
+<label>Já tenho (€)</label><input id="gHave" type="number" step="0.01" min="0" value="0">
+<label>Guardar por semana (€)</label><input id="gWeekly" type="number" step="0.01" min="0">
+<button class="primary" style="width:100%" onclick="addGoal()">Salvar objetivo</button>
+</div>
+<div id="goalList"></div>
+</section>
+
+<section id="settings" class="page">
+<div class="section-title">Configurações</div>
+<div class="form">
+<label>Valor por hora normal (€)</label><input id="sRate" type="number" step="0.01">
+<label>Adicional de domingo (€)</label><input id="sSunday" type="number" step="0.01">
+<label>Gastos fixos semanais (€)</label>
+<input id="sFood" type="number" step="0.01" placeholder="Alimentação">
+<input id="sTransport" type="number" step="0.01" placeholder="Transporte">
+<input id="sHome" type="number" step="0.01" placeholder="Casa">
+<input id="sPhone" type="number" step="0.01" placeholder="Telefone/Internet">
+<input id="sOther" type="number" step="0.01" placeholder="Outros fixos">
+<button class="primary" style="width:100%" onclick="saveSettings()">Salvar configurações</button>
+</div>
+<div class="section-title">Dados</div>
+<div class="actions"><button class="secondary" onclick="exportData()">Exportar backup</button><button class="danger" onclick="resetData()">Apagar dados</button></div>
+</section>
+</main>
+<nav><div class="navin">
+<button class="navbtn active" data-page="home" onclick="go('home')"><span class="navicon">⌂</span>Início</button>
+<button class="navbtn" data-page="work" onclick="go('work')"><span class="navicon">◷</span>Trabalho</button>
+<button class="navbtn" data-page="expenses" onclick="go('expenses')"><span class="navicon">€</span>Gastos</button>
+<button class="navbtn" data-page="goals" onclick="go('goals')"><span class="navicon">◎</span>Metas</button>
+<button class="navbtn" data-page="settings" onclick="go('settings')"><span class="navicon">⚙</span>Config</button>
+</div></nav>
+</div>
+
+<script>
+const KEY='meu_financeiro_v2';
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||{
+settings:{rate:14.15,sunday:18.90,fixed:{food:0,transport:0,home:0,phone:0,other:0}},
+work:[],expenses:[],goals:[
+{name:'Renovação / Curso',target:2000,have:1400,weekly:100},
+{name:'Viagem',target:0,have:0,weekly:0},
+{name:'Reserva',target:0,have:0,weekly:0}
+]};
+function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+function euro(n){return '€'+Number(n||0).toFixed(2).replace('.',',')}
+function dateToday(){return new Date().toISOString().slice(0,10)}
+function monday(d){let x=new Date(d+'T12:00:00');let day=x.getDay();let diff=day===0?-6:1-day;x.setDate(x.getDate()+diff);return x.toISOString().slice(0,10)}
+function currentWeek(arr){let m=monday(dateToday());return arr.filter(x=>monday(x.date)===m)}
+function paid(w){return Math.max(0,Number(w.hours||0)-Number(w.breaks||0)*.25)}
+function workPay(w){let h=paid(w);return h*(w.type==='sunday'?data.settings.rate+data.settings.sunday:data.settings.rate)}
+function fixedTotal(){let f=data.settings.fixed;return Object.values(f).reduce((a,b)=>a+Number(b||0),0)}
+function weeklyGoalTotal(){return data.goals.reduce((a,g)=>a+Number(g.weekly||0),0)}
+function weeklyTarget(){return fixedTotal()+weeklyGoalTotal()}
+function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.page===id));render()}
+function addWork(){let date=wDate.value||dateToday(),hours=Number(wHours.value),breaks=Number(wBreaks.value||0);if(!hours){alert('Informe as horas trabalhadas.');return}data.work.push({id:Date.now(),date,hours,breaks,type:wType.value});wHours.value='';wBreaks.value='0';save();go('work')}
+function addExpense(){let value=Number(eValue.value);if(!value){alert('Informe o valor do gasto.');return}data.expenses.push({id:Date.now(),date:eDate.value||dateToday(),value,cat:eCat.value,desc:eDesc.value.trim()});eValue.value='';eDesc.value='';save();go('expenses')}
+function addGoal(){let name=gName.value.trim(),target=Number(gTarget.value),have=Number(gHave.value||0),weekly=Number(gWeekly.value||0);if(!name||!target){alert('Informe nome e valor da meta.');return}data.goals.push({name,target,have,weekly});gName.value='';gTarget.value='';gHave.value='0';gWeekly.value='';save();go('goals')}
+function del(type,id){data[type]=data[type].filter(x=>x.id!==id);save()}
+function delGoal(i){data.goals.splice(i,1);save()}
+function saveSettings(){data.settings.rate=Number(sRate.value)||0;data.settings.sunday=Number(sSunday.value)||0;data.settings.fixed={food:Number(sFood.value)||0,transport:Number(sTransport.value)||0,home:Number(sHome.value)||0,phone:Number(sPhone.value)||0,other:Number(sOther.value)||0};save();alert('Configurações salvas.')}
+function render(){
+let ww=currentWeek(data.work),ee=currentWeek(data.expenses),income=ww.reduce((a,w)=>a+workPay(w),0),expenses=ee.reduce((a,e)=>a+Number(e.value),0)+fixedTotal(),target=weeklyTarget(),remaining=Math.max(0,target-income),hours=ww.reduce((a,w)=>a+paid(w),0),pct=target?Math.min(100,income/target*100):0;
+kMeta.textContent=euro(target);kIncome.textContent=euro(income);kExpense.textContent=euro(expenses);kBalance.textContent=euro(income-expenses);kHours.textContent=hours.toFixed(2)+'h';kRemaining.textContent=euro(remaining);bar.style.width=pct+'%';
+status.textContent=target<=0?'Configure seus gastos e objetivos para criar sua meta semanal.':income>=target?'Meta semanal atingida 🎯':'Faltam '+euro(remaining)+' para atingir a meta.';
+let ng=data.goals.find(g=>g.target>g.have);nextGoal.innerHTML=ng?`<b>${ng.name}</b><div style="margin-top:7px">${euro(ng.have)} de ${euro(ng.target)}</div><div class="progress"><div class="bar" style="width:${Math.min(100,ng.have/ng.target*100)}%"></div></div>`:'Nenhum objetivo pendente.';
+workList.innerHTML=ww.length?ww.slice().reverse().map(w=>`<div class="item"><div><b>${w.date}</b><br><small>${w.type==='sunday'?'Domingo':'Normal'} · ${paid(w).toFixed(2)}h pagas</small></div><div class="amount">${euro(workPay(w))}<br><button class="danger" onclick="del('work',${w.id})">Excluir</button></div></div>`).join(''):'Nenhum registro esta semana.';
+expenseList.innerHTML=ee.length?ee.slice().reverse().map(e=>`<div class="item"><div><b>${e.cat}</b><br><small>${e.date}${e.desc?' · '+e.desc:''}</small></div><div class="amount red">${euro(e.value)}<br><button class="danger" onclick="del('expenses',${e.id})">Excluir</button></div></div>`).join(''):'Nenhum gasto extra esta semana.';
+goalList.innerHTML=data.goals.map((g,i)=>{let p=g.target?Math.min(100,g.have/g.target*100):0;return `<div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between"><b>${g.name}</b><button class="danger" onclick="delGoal(${i})">Excluir</button></div><div style="margin-top:9px">${euro(g.have)} de ${euro(g.target)} · ${g.weekly?euro(g.weekly)+'/semana':'sem valor semanal'}</div><div class="progress"><div class="bar" style="width:${p}%"></div></div></div>`}).join('');
+sRate.value=data.settings.rate;sSunday.value=data.settings.sunday;sFood.value=data.settings.fixed.food;sTransport.value=data.settings.fixed.transport;sHome.value=data.settings.fixed.home;sPhone.value=data.settings.fixed.phone;sOther.value=data.settings.fixed.other;
+}
+function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='meu-financeiro-backup.json';a.click();URL.revokeObjectURL(a.href)}
+function resetData(){if(confirm('Tem certeza que deseja apagar todos os dados?')){localStorage.removeItem(KEY);location.reload()}}
+wDate.value=eDate.value=dateToday();render();
+</script>
+</body></html>
